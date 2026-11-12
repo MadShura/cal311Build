@@ -182,6 +182,12 @@ export function getFreeWujiang (stat: stat) {
 // Region 空闲武将做建筑
 export function getfreeWuJiangBuild (freeWujiangNameArr: string[],buildName: keyof Moving) {
   const key = freeWujiangNameArr.join(",");
+  if (buildName === "市场" && freeWuJiangBuildMarketCache.has(key)) {
+    return freeWuJiangBuildMarketCache.get(key);
+  }
+  if (buildName === "造币厂" && freeWuJiangBuildZaoBiChangCache.has(key)) {
+    return freeWuJiangBuildZaoBiChangCache.get(key);
+  }
 
   // 只对空闲武将按政治排序
   const sortedFreeWujiangArr = [...freeWujiangNameArr].toSorted(
@@ -233,15 +239,9 @@ export function getfreeWuJiangBuild (freeWujiangNameArr: string[],buildName: key
     return subCache;
   }
   if (buildName === "市场") {
-    if (freeWuJiangBuildMarketCache.has(key)) {
-      return freeWuJiangBuildMarketCache.get(key);
-    }
     return filterAndCache(freeWuJiangBuildMarketCache);
   }
   if (buildName === "造币厂") {
-    if (freeWuJiangBuildZaoBiChangCache.has(key)) {
-      return freeWuJiangBuildZaoBiChangCache.get(key);
-    }
     return filterAndCache(freeWuJiangBuildZaoBiChangCache);
   }
   return {};

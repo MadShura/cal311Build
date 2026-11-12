@@ -107,7 +107,7 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
   return newStat;
 }
 
-  // #region 回合强制操作
+// #region 回合强制操作
 // 返回新 stat
 function executeTurnAction (stat: stat): null | stat {
   const turnIndex = stat.turn - 1;
@@ -161,14 +161,12 @@ function getAllPossibleActions (stat: stat,movingNameArr: (keyof Moving)[]): Act
     actions.push({actionType: "无人空闲",needtime: 0,wujiangArr: []});
     return actions;
   }
-  let maxXuncha = 0;
   let isNeedDoNothing = false;
 
   // Const choicesArr = stat.movingSortArr;
   for (const movingName of movingNameArr) {
     if (movingName === "巡查") { // 巡查 可能不会增加 action
       const [wujiangArr,xunchaZhi] = getfreeWuJiangXuncha(freeWujiangNameArr);
-      maxXuncha = Math.max(maxXuncha,xunchaZhi);
       if (xunchaZhi < 最大巡查值) {
         isNeedDoNothing = true;
       }
@@ -177,7 +175,6 @@ function getAllPossibleActions (stat: stat,movingNameArr: (keyof Moving)[]): Act
       const {combinations,minBuildTime} = getSortedBuildCombinations(getfreeWuJiangBuild(freeWujiangNameArr,"造币厂"),stat.turn);
       for (const combo of combinations) {
         const wujiangArr = combo.wujiangArr;
-        maxXuncha = Math.max(maxXuncha,minBuildTime);
         if (combo.buildTime + stat.turn <= maxturn) {
           actions.push({actionType: "造币厂",needtime: combo.buildTime,wujiangArr});
         }
@@ -189,7 +186,6 @@ function getAllPossibleActions (stat: stat,movingNameArr: (keyof Moving)[]): Act
       const {combinations,minBuildTime} = getSortedBuildCombinations(getfreeWuJiangBuild(freeWujiangNameArr,"市场"),stat.turn);
       for (const combo of combinations) {
         const wujiangArr = combo.wujiangArr;
-        maxXuncha = Math.max(maxXuncha,minBuildTime);
         if (combo.buildTime + stat.turn <= maxturn) {
           actions.push({actionType: "市场",needtime: combo.buildTime,wujiangArr});
         }
@@ -489,16 +485,16 @@ function runApp (): void {
   main();
 }
 function updateBestResultMap (stat: stat): void {
-    if (stat.实时金 > bestGold) {
-      bestResultArr = [stat];
-      bestGold = stat.实时金;
-      console.log("更好结果",`最终金额 ${stat.实时金.toString()}`,stat.行动.at(-1));
-      myWirteFile("result",bestResultArr,true);
-    } else if (stat.实时金 === bestGold) {
-      bestResultArr.push(stat);
+  if (stat.实时金 > bestGold) {
+    bestResultArr = [stat];
+    bestGold = stat.实时金;
+    console.log("更好结果",`最终金额 ${stat.实时金.toString()}`,stat.行动.at(-1));
+    myWirteFile("result",bestResultArr,true);
+  } else if (stat.实时金 === bestGold) {
+    bestResultArr.push(stat);
 
-      // Console.log("相同结果",`最终金额 ${stat.实时金.toString()} `,stat.行动.at(-1));
-      myWirteFile("result",bestResultArr);
-    }
+    // Console.log("相同结果",`最终金额 ${stat.实时金.toString()} `,stat.行动.at(-1));
+    myWirteFile("result",bestResultArr);
   }
+}
 runApp();
