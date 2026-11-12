@@ -235,7 +235,7 @@ function main (): void {
     const output = Object.entries(cacheObj)
       .map(([key,value]) => `${key}: ${value.toString()}`)
       .join("\n");
-    writeFileSync(`src/311build/output/${i.toString()}回合结束缓存.log`,output);
+    writeFileSync(`src/output/${i.toString()}回合结束缓存.log`,output);
   }
 }
 

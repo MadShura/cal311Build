@@ -125,7 +125,8 @@ export function generateXindongCacheKey (stat: stat): string {
 // #region 拿武将组合建造时间
 /**
  * @description 获取武将组合的建造时间 武将组合默认政治高到低排列 无需再排列
- * @param wujiangCombo 武将组合
+ * @param wujiangCombo 武将组合.
+ * @param buildingName 建筑名称
  * @returns 建造时间
  */
 export function getBuildTimeFronWuJiangComBo (wujiangCombo: string | string[],buildingName: string): number {
@@ -183,77 +184,65 @@ export function getfreeWuJiangBuild (freeWujiangNameArr: string[],buildName: key
   const key = freeWujiangNameArr.join(",");
 
   // 只对空闲武将按政治排序
-  const sortedFreeWujiangArr = [...freeWujiangNameArr].toSorted((a,b) => (baseStat0.wujiangData[b]?.政治 ?? 0) - (baseStat0.wujiangData[a]?.政治 ?? 0));
+  const sortedFreeWujiangArr = [...freeWujiangNameArr].toSorted(
+    (a,b) => (baseStat0.wujiangData[b]?.政治 ?? 0) - (baseStat0.wujiangData[a]?.政治 ?? 0)
+  );
   const allCombinations = getAllCombinations(sortedFreeWujiangArr,3);
 
   // 筛选并缓存函数
-  function filterAndCache (cache: Map<string,Map<string,number>>,cacheKey: string,buildTarget: keyof Moving) {
+  function filterAndCache (cache: Map<string,Map<string,number>>) {
     const subCache = new Map<string,number>();
     for (const wujiangArr of allCombinations) {
       const wujiangArrStr = wujiangArr.join(",");
-      const buildTime = getBuildTimeFronWuJiangComBo(wujiangArr.join(","),buildTarget);
+      const buildTime = getBuildTimeFronWuJiangComBo(wujiangArrStr,buildName);
 
       // 筛选掉较差的组合
       let shouldKeep = true;
       if (wujiangArr.length === 3) {
-        const buildTime2 = getBuildTimeFronWuJiangComBo([wujiangArr[0],wujiangArr[2]].join(","),buildTarget);
-        if (buildTime2 === buildTime) {
-          shouldKeep = false;
+        const buildTime2 = getBuildTimeFronWuJiangComBo([wujiangArr[0],wujiangArr[2]].join(","),buildName);
+        if (buildTime2 === buildTime) {shouldKeep = false;}
+        if (shouldKeep) {
+          const buildTime3 = getBuildTimeFronWuJiangComBo([wujiangArr[0],wujiangArr[1]].join(","),buildName);
+          if (buildTime3 === buildTime) {shouldKeep = false;}
         }
         if (shouldKeep) {
-          const buildTime3 = getBuildTimeFronWuJiangComBo([wujiangArr[0],wujiangArr[1]].join(","),buildTarget);
-          if (buildTime3 === buildTime) {
-            shouldKeep = false;
-          }
+          const buildTime4 = getBuildTimeFronWuJiangComBo([wujiangArr[0] ?? ""],buildName);
+          if (buildTime4 === buildTime) {shouldKeep = false;}
         }
         if (shouldKeep) {
-          const buildTime4 = getBuildTimeFronWuJiangComBo([wujiangArr[0] ?? ""],buildTarget);
-          if (buildTime4 === buildTime) {
-            shouldKeep = false;
-          }
+          const buildTime5 = getBuildTimeFronWuJiangComBo([wujiangArr[1] ?? ""],buildName);
+          if (buildTime5 === buildTime) {shouldKeep = false;}
         }
         if (shouldKeep) {
-          const buildTime5 = getBuildTimeFronWuJiangComBo([wujiangArr[1] ?? ""],buildTarget);
-          if (buildTime5 === buildTime) {
-            shouldKeep = false;
-          }
-        }
-        if (shouldKeep) {
-          const buildTime6 = getBuildTimeFronWuJiangComBo([wujiangArr[2] ?? ""],buildTarget);
-          if (buildTime6 === buildTime) {
-            shouldKeep = false;
-          }
+          const buildTime6 = getBuildTimeFronWuJiangComBo([wujiangArr[2] ?? ""],buildName);
+          if (buildTime6 === buildTime) {shouldKeep = false;}
         }
       } else if (wujiangArr.length === 2) {
-        const buildTime4 = getBuildTimeFronWuJiangComBo([wujiangArr[0] ?? ""],buildTarget);
-        if (buildTime4 === buildTime) {
-          shouldKeep = false;
-        }
+        const buildTime4 = getBuildTimeFronWuJiangComBo([wujiangArr[0] ?? ""],buildName);
+        if (buildTime4 === buildTime) {shouldKeep = false;}
         if (shouldKeep) {
-          const buildTime5 = getBuildTimeFronWuJiangComBo([wujiangArr[1] ?? ""],buildTarget);
-          if (buildTime5 === buildTime) {
-            shouldKeep = false;
-          }
+          const buildTime5 = getBuildTimeFronWuJiangComBo([wujiangArr[1] ?? ""],buildName);
+          if (buildTime5 === buildTime) {shouldKeep = false;}
         }
       }
       if (shouldKeep) {
         subCache.set(wujiangArrStr,buildTime);
       }
     }
-    cache.set(cacheKey,subCache);
+    cache.set(key,subCache);
     return subCache;
   }
   if (buildName === "市场") {
     if (freeWuJiangBuildMarketCache.has(key)) {
       return freeWuJiangBuildMarketCache.get(key);
     }
-    return filterAndCache(freeWuJiangBuildMarketCache,key,buildName);
+    return filterAndCache(freeWuJiangBuildMarketCache);
   }
   if (buildName === "造币厂") {
     if (freeWuJiangBuildZaoBiChangCache.has(key)) {
       return freeWuJiangBuildZaoBiChangCache.get(key);
     }
-    return filterAndCache(freeWuJiangBuildZaoBiChangCache,key,buildName);
+    return filterAndCache(freeWuJiangBuildZaoBiChangCache);
   }
   return {};
 }
@@ -352,14 +341,7 @@ function cloneEachTrunStatWithMoney (original: stat): EachTrunStatWithMoney[] {
   }
   return result;
 }
-export const isCheckFlag = (stat: stat): boolean => {
-  for (const each in stat.flag) {
-    if (!stat.flag[each]) {
-      return false;
-    }
-  }
-  return true;
-};
+export const isCheckFlag = (stat: stat): boolean => Object.values(stat.flag).every(Boolean);
 
 /**
  * 将 getfreeWuJiangBuild 返回的 Map 按优先度排序
@@ -420,7 +402,7 @@ export function getSortedBuildCombinations (
 // 市场[1,4,5] 0 3 4
 export function isCalBestBuildingEd (bestB: number[],nowB: number[],turn: number): boolean {
   if (bestB.length > 0) {
-    const needTrun =  turn % 3;
+    const needTrun = turn % 3;
 
     // Console.log(bestB,nowB,needTrun);
     // If (bestB.length > nowB.length) {

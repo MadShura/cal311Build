@@ -6,16 +6,15 @@ import {initStat,maxturn,PRUNE_REPORT_INTERVAL} from "./data.js";
 import {全行动缓存} from "./index.js";
 
 const __dirname = import.meta.dirname;
-declare const deleteFileNameArr: string[];
+const fileNameArrToDelete = [
+  "支配剪枝",
+  "结果",
+  "过程",
+  "操作记录",
+  "result",
+  "turn"
+];
 
-// const removeFileNameArr = [
-// "支配剪枝",
-// "结果",
-// "过程",
-// "操作记录",
-// "result",
-// "turn"
-// ];
 // 添加剪枝计数器
 const pruneCount: Record<string,number> = {
   全做完剪枝:      0,
@@ -28,7 +27,7 @@ const pruneCount: Record<string,number> = {
  * @param fileName 剪枝名称
  */
 export function recordPrune (fileName: string): void {
-  pruneCount[fileName] = (pruneCount[fileName] || 0) + 1;
+  pruneCount[fileName] = (pruneCount[fileName] ?? 0) + 1;
 
   // 每隔一定次数输出统计
   if (!(pruneCount[fileName] > 0 && pruneCount[fileName] % PRUNE_REPORT_INTERVAL === 0)) {
@@ -163,9 +162,9 @@ function clearDepthFiles (): void {
   try {
     const files = readdirSync(__dirname);
     for (const file of files) {
-      for (const targetName of deleteFileNameArr) {
+      for (const targetName of fileNameArrToDelete) {
         if (!(file.startsWith(targetName) && file.endsWith(".log"))) {
-        	continue;
+          continue;
         }
         const filePath = join(__dirname,file);
         unlinkSync(filePath);
@@ -173,9 +172,9 @@ function clearDepthFiles (): void {
       }
     }
     for (const file of files) {
-      for (const targetName of deleteFileNameArr) {
+      for (const targetName of fileNameArrToDelete) {
         if (!(file.startsWith(targetName) && file.endsWith(".json"))) {
-        	continue;
+          continue;
         }
         const filePath = join(__dirname,file);
         unlinkSync(filePath);

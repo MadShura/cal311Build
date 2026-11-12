@@ -5,7 +5,7 @@
 ## 〇、项目地图
 
 - `src`：项目源码根目录
-- `src/311build`：311 构建结果
+- `src`：311 构建结果
 - `src/dnf模拟端`：DNF 模拟端
 - `src/dnf清风1031`：DNF 清风 1031
 - `src/tkf398`：tkf398 子项目
@@ -18,7 +18,7 @@
 
 ## 一、本项目脚本生成文件
 
-- `src/311build/result.json`（`pnpm 311b`）
+- `src/result.json`（`pnpm 311b`）
 - `src/tkf398/lab.json`、`bosstemplate.json` 等（`tkf398:gen:*`、`tkf398:translate`）
 - `src/tkf398/tkfCheck/output/*.txt`（`tkfcheck`）
 

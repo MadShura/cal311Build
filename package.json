@@ -1,6 +1,6 @@
 {
   "name": "forPlayGameWeb",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "description": "",
   "keywords": [],
   "license": "ISC",
@@ -8,7 +8,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "311b": "pnpm exec  tsx src/311build/index.ts",
+    "311b": "pnpm exec  tsx src/index.ts",
     "build": "tsc",
     "cl": "pnpm prune && pnpm store prune",
     "dev": "vite",
@@ -18,7 +18,6 @@
     "lint:ox": "oxlint . --fix --type-aware > lint-ox.log 2>&1",
     "preview": "vite preview",
     "push": "axl push",
-    "random311": "node .\\游戏相关\\三国志11\\random.js",
     "rei": "rimraf node_modules && pnpm i",
     "tc": "tsc --noEmit > tc.log 2>&1",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch",

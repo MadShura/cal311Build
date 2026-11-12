@@ -54,13 +54,4 @@ _gen*
 # eslint 检测缓存
 .eslintcache
 
-# dnf pvf 不追踪
-*.pvf
-
-# 客户端/SPT DLL 反编译产物（由 src/tkf398/decompile398.ps1 生成）
-src/tkf398/反编译398/
-# 同上，ASCII 通配兜底，避免中文路径在不同 Git/终端编码下匹配失败
-src/tkf398/*398*/
-
-# 挂机手游模拟器反编译产物（由 src/挂机手游模拟器/scripts/decompile.ps1 生成）
-src/挂机手游模拟器/反编译/
+src/output
