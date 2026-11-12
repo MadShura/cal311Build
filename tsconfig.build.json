@@ -1,0 +1,13 @@
+{
+
+  // 继承项目 tsconfig.json, 仅覆盖构建相关选项
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false, // 生成输出文件
+    "outDir": "./dist", // 输出目录
+    "declaration": true,    // 生成声明文件
+    "declarationMap": true,  // 生成声明映射
+    "include": ["src/**/*.ts"],
+    "sourceMap": true   // 生成源映射
+  }
+}

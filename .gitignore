@@ -1,0 +1,66 @@
+# Logs 
+*.log
+pnpm-debug.log*
+package-lock.json
+
+#modules
+node_modules
+dist
+*.cache
+
+# macOS 目录属性文件
+.DS_Store
+
+# pwa 生成
+dev-dist
+
+# 编辑器相关
+# .vscode 分享 .vscode/extensions.json 但不分享 .vscode 的其他文件
+.vscode
+!.vscode/extensions.json
+
+# trae AI生成的修改文档
+.trae/documents
+
+# for test
+/cypress/videos/
+/cypress/screenshots/
+
+# 敏感文件 仅分享 .env.example 
+.env*
+!.env.example
+
+# TypeScript 
+# tsconfig 编译设置了 incremental 后会生成 tsbuildinfo
+*.tsbuildinfo
+
+# 数据库导出文件
+*.dump
+
+# 临时文件
+*.tmp
+*.temp
+
+# 参考仓库
+otherproject
+
+# 脚本生成文件
+_gen*
+
+# JetBrains IDE
+.idea
+.fleet
+
+# eslint 检测缓存
+.eslintcache
+
+# dnf pvf 不追踪
+*.pvf
+
+# 客户端/SPT DLL 反编译产物（由 src/tkf398/decompile398.ps1 生成）
+src/tkf398/反编译398/
+# 同上，ASCII 通配兜底，避免中文路径在不同 Git/终端编码下匹配失败
+src/tkf398/*398*/
+
+# 挂机手游模拟器反编译产物（由 src/挂机手游模拟器/scripts/decompile.ps1 生成）
+src/挂机手游模拟器/反编译/

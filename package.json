@@ -1,0 +1,49 @@
+{
+  "name": "forPlayGameWeb",
+  "version": "1.0.27",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "311b": "pnpm exec  tsx src/311build/index.ts",
+    "build": "tsc",
+    "cl": "pnpm prune && pnpm store prune",
+    "dev": "vite",
+    "lint": "run-s --continue-on-error lint:ox lint:es",
+    "lint-rules": "axl lint-rules",
+    "lint:es": "eslint . --fix --cache > lint-es.log 2>&1",
+    "lint:ox": "oxlint . --fix --type-aware > lint-ox.log 2>&1",
+    "preview": "vite preview",
+    "push": "axl push",
+    "random311": "node .\\游戏相关\\三国志11\\random.js",
+    "rei": "rimraf node_modules && pnpm i",
+    "tc": "tsc --noEmit > tc.log 2>&1",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:all": "pnpm test",
+    "up:tsConfig": "axl tsconfig-exclude"
+  },
+  "dependencies": {
+    "axl-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "axl-lint": "workspace:*",
+    "axl-scripts": "workspace:*",
+    "eslint": "catalog:",
+    "@eslint/js": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "tsx": "catalog:",
+    "@types/eslint": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  },
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=12.0.0"
+  }
+}

@@ -1,0 +1,39 @@
+{
+"compilerOptions": { // 编译选项
+    "target": "ESNext",// 使用最新的 ES 语法
+    "module": "ESNext",     // 模块系统
+    "lib": [ // 包含的类型库  
+      "ESNext"
+    ], 
+    "moduleResolution": "Bundler",    // 模块解析策略
+    "esModuleInterop": true,  // 允许 es6 互操作
+    "strict": true,    // 启用所有严格类型检查
+    "skipLibCheck": true,    // 跳过 .d.ts 类型检查
+    "noEmit": true, // 不生成输出文件(仅类型检查)
+    "allowImportingTsExtensions": true, // 允许导入 .ts 扩展名(需配合 noEmit)
+    "noUncheckedIndexedAccess":true, // 避免 arr[0] 索引取值可能是 undefined 的错误
+
+    // 包含的文件 这里指所有 ts 文件，这样可以让 lint 生效
+    "types": [  
+      "node"
+    ] 
+  },
+  
+  // 务必设置 否则 eslint oxlint 不检测类型
+  "include": ["**/*"], // 
+  "exclude": [     // 排除的文件 比 include 优先级高,脚本生成的文件如果是需要参与打包的，这里不能包括
+    "**/otherProject/**/*", // 其他对比项目
+    "**/release/**",
+    "**/node_modules/**",
+    "**/dist/**", // 默认打包目录
+    "**/dist-ssr/**",
+    "**/coverage/**",
+    "**/*.cache",
+        "src/tkf398/spt398server",// 别人的项目
+    "src/tkf398/反编译398", // 其他语言
+    "src/挂机手游模拟器/反编译",// 其他语言
+    "src/tkf398/自改配置&mod/user/mods/" // 别人写的 mod
+
+  ], 
+  "references": [] // 引用
+}
