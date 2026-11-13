@@ -2,7 +2,7 @@ import type {ActionChoice,Moving,stat} from "./types.js";
 import {baseStat0,initStat,maxturn,能接受的最大治安} from "./data.js";
 import {calMonthIncome,deepCloneStat,generateXindongCacheKey,getfreeWuJiangBuild,getFreeWujiangNameIsArr,getfreeWuJiangXuncha,getSortedBuildCombinations,isCheckFlag,最大巡查值,市场最小时间,造币厂最小时间} from "./game-logic.js";
 import {init,myWirteFile,recordAction,recordPrune} from "./console.js";
-import {allMoveCache,pruneByActionPoint,pruneByFinalGold,pruneByTurnExceed,pruneByWujiangIdle,pruneZhianGold,streamCache,willPruneByBestResult} from "./prune.js";
+import {allMoveCache,shouldPruneByActionPoint,shouldPruneByFinalGold,shouldPruneByTurnExceed,shouldPruneByWujiangIdle,shouldPruneZhianGold,streamCache,willPruneByBestResult} from "./prune.js";
 
 let bestResultArr: stat[] = [];
 let bestGold = 0; // 最大经济
@@ -47,7 +47,7 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
       passTurnMustDo(newStat,true);
       return null;
     }
-    if (pruneZhianGold(newStat.turn,newStat)) {return null;}
+    if (shouldPruneZhianGold(newStat.turn,newStat)) {return null;}
     recordAction(actionType,wujiangArr,currentXindongCacheKey,currentXindongCacheKey);
     return newStat;
 
@@ -86,7 +86,7 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
     passTurnMustDo(newStat,true);
     return null;
   }
-  if (pruneZhianGold(newStat.turn,newStat)) {return null;}
+  if (shouldPruneZhianGold(newStat.turn,newStat)) {return null;}
   recordAction(actionType,wujiangArr,currentXindongCacheKey,currentXindongCacheKey);
   return newStat;
 }
@@ -101,7 +101,7 @@ function executeTurnAction (stat: stat): null | stat {
   newStat.isDoMustDo.push(turnIndex);
   const mustDoParts: string[] = [];
   if (action.行动力消耗) {
-    if (pruneByActionPoint(newStat,action)) {return null;}
+    if (shouldPruneByActionPoint(newStat,action)) {return null;}
     newStat.行动力 -= action.行动力消耗;
     mustDoParts.push(`消耗行动力${action.行动力消耗.toString()} `);
   }
@@ -117,7 +117,7 @@ function executeTurnAction (stat: stat): null | stat {
       if (wujiang.free === 0) {
         wujiang.free = freeValue;
         mustDoParts.push(`${wujiangName}设置为${freeValue.toString()} `);
-      } else if (pruneByWujiangIdle(wujiang,freeValue)) {
+      } else if (shouldPruneByWujiangIdle(wujiang,freeValue)) {
         return null;
       }
     }
@@ -230,8 +230,7 @@ function passTurnMustDo (stat: stat,isDone?: boolean): null | stat {
   // If (generateXindongCacheKey(newStat) === "9 回合,治安99,行动力156 市场[3,3,0,0,0,0]造币厂[0]巡查[0]伦直3贾范3公孙恭3公孙康92公孙度92徐荣3公孙渊3杨祚0卑衍0") {
   // Console.log(newStat,"passTurnMustDo3",isDone);
   // }
-  if (pruneByFinalGold(newStat,bestGold)) {return null;}
-  if (willPruneByBestResult(newStat,bestResultArr)) {return null;}
+  if (shouldPruneByFinalGold(newStat,bestGold) || willPruneByBestResult(newStat,bestResultArr)) {return null;}
   newStat.turn++; // 加回合数
   const {moving,wujiangData} = newStat;
 
@@ -257,14 +256,13 @@ function passTurnMustDo (stat: stat,isDone?: boolean): null | stat {
   };
   newStat.行动力 = Math.min(newStat.行动力 + baseStat0.每回合回复行动力,255);
   const currentXindongCacheKey = generateXindongCacheKey(newStat);
-  if (pruneByTurnExceed(newStat)) {return null;}
+  if (shouldPruneByTurnExceed(newStat) || shouldPruneZhianGold(stat.turn,newStat)) {return null;}
 
   // If (generateXindongCacheKey(newStat) === "9 回合,治安99,行动力196 市场[0,0,0,0]造币厂[0]巡查[0]伦直0贾范0公孙恭0公孙康92公孙度92徐荣0公孙渊0杨祚0卑衍0") {
   // Console.log(newStat,"passTurnMustDo2",allMoveCache.has(currentXindongCacheKey),allMoveCache.get(currentXindongCacheKey));
   // }
   // 故意设置的是 stat.turn 因为 如果是 newStat.turn 那么这里的记录就是7回合,原意是记录所有6回合结束的状态
   // 记录的操作时 '回合结束 x 回合' 这时候的状态 所以实际上是上一个回合的状态
-  if (pruneZhianGold(stat.turn,newStat)) {return null;}
   newStat.xunchaEd = false;
   newStat.行动.push(`回合结束 ${currentXindongCacheKey} 实时金:${newStat.实时金.toString()}`); // 过回合
   if (isDone) {
@@ -407,4 +405,4 @@ function updateBestResultMap (stat: stat): void {
     myWirteFile(resultFileName,bestResultArr);
   }
 }
-runApp();
+await runApp();

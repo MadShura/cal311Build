@@ -13,8 +13,11 @@ export default createConfig({
       files: ["src/tkf398/config.ts"],
       rules: {"max-lines": "off"}
     },{
-      files: ["src/**/*.ts"],
-      rules: {"axl-custom-rules/no-native-api": "off","no-magic-numbers": "off"}
+      files: ["src/**/*.ts","src1/**/*.ts","src2/**/*.ts","src3/**/*.ts"],
+      rules: {"axl-custom-rules/no-native-api": "off"}
+    },{
+      files: ["src/**/*.ts","src1/**/*.ts","src2/**/*.ts","src3/**/*.ts"],
+      rules: {"no-magic-numbers": "off"}
     }
   ],
   types: ["tsfile","jsfile"]

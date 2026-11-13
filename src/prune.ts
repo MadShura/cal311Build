@@ -5,7 +5,7 @@
 // 缓存命中优化:建造 isBuilding 已在 game-logic 中排序,键天然规整,命中率更高.
 import type {stat,TurnAction} from "./types.js";
 import {baseStat0,maxLastTurnIncome,maxturn,能接受的最大治安} from "./data.js";
-import {calMonthIncome,generateXindongCacheKey,isCalBestBuildingEd,市场最小时间,最大巡查值} from "./game-logic.js";
+import {calMonthIncome,generateXindongCacheKey,isCalBestBuildingEd,最大巡查值,市场最小时间} from "./game-logic.js";
 import {recordPrune} from "./console.js";
 import {createWriteStream} from "node:fs";
 
@@ -15,7 +15,7 @@ export const allMoveCache: Map<string,ZhianGold[]>[] = Array.from({length: maxtu
 
 // #region 4. 其它纯判定剪枝
 // 当前状态必做操作的行动力不足 → 剪枝
-export function pruneByActionPoint (newStat: stat,action: TurnAction): boolean {
+export function shouldPruneByActionPoint (newStat: stat,action: TurnAction): boolean {
   if (action.行动力消耗 && newStat.行动力 < action.行动力消耗) {
     recordPrune("当前状态行动力不符合剪枝");
     return true;
@@ -27,9 +27,11 @@ export function pruneByActionPoint (newStat: stat,action: TurnAction): boolean {
 /**
  * 基于已知最好结果 bestGold,估算本状态最终经济,若注定不如最好结果则剪枝.
  * 对应 README "回合收入剪枝":比较到 maxturn-市场最小时间-3 处的最终收入.
+ * @param newStat 当前状态
+ * @param bestGold 已知最好结果金额
  * @returns 是否被剪枝
  */
-export function pruneByFinalGold (newStat: stat,bestGold: number): boolean {
+export function shouldPruneByFinalGold (newStat: stat,bestGold: number): boolean {
   if (!bestGold || newStat.turn !== maxturn - 市场最小时间 - 3) {return false;}
   const need巡查次数 = Math.ceil((能接受的最大治安 - newStat.治安) / 最大巡查值); // 有可能负数
   let needGold = Math.max(0,need巡查次数 * 100);
@@ -60,7 +62,7 @@ export function pruneByFinalGold (newStat: stat,bestGold: number): boolean {
 
 // #endregion
 // 状态回合数超过最大回合数 → 剪枝
-export function pruneByTurnExceed (newStat: stat): boolean {
+export function shouldPruneByTurnExceed (newStat: stat): boolean {
   if (newStat.turn > maxturn) {
     recordPrune("回合超出剪枝");
     return true;
@@ -69,8 +71,8 @@ export function pruneByTurnExceed (newStat: stat): boolean {
 }
 
 // 当前状态必做操作的武将不空闲(本应空闲却被占用) → 剪枝
-export function pruneByWujiangIdle (wujiang: {free: number},freeValue: number): boolean {
-  if (wujiang.free !== 0) { // freeValue 仅用于必做设置,此处只判定占用
+export function shouldPruneByWujiangIdle (wujiang: {free: number},_freeValue: number): boolean {
+  if (wujiang.free !== 0) { // _freeValue 仅用于必做设置,此处只判定占用
     recordPrune("当前状态武将不空闲剪枝");
     return true;
   }
@@ -87,7 +89,7 @@ export function pruneByWujiangIdle (wujiang: {free: number},freeValue: number): 
  * @param stat 待判定状态
  * @returns 是否被剪枝
  */
-export function pruneZhianGold (turn: number,stat: stat): boolean {
+export function shouldPruneZhianGold (turn: number,stat: stat): boolean {
   const cache = allMoveCache[turn];
   if (cache === undefined) {return false;}
   const key =  generateXindongCacheKey(stat);
@@ -133,6 +135,8 @@ export async function streamCache (cache: Map<string,ZhianGold[]>,filePath: stri
 /**
  * 基于最好结果的逐回合记录 bestResultArr,只要本状态在 治安/市场/造币厂 任一方面能不弱于最好结果才放行.
  * 对应 README "回合收入剪枝" 的逐回合对比.
+ * @param newStat 当前状态
+ * @param bestResultArr 最好结果逐回合记录
  * @returns 是否被剪枝
  */
 export function willPruneByBestResult (newStat: stat,bestResultArr: stat[]): boolean {

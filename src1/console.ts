@@ -1,6 +1,7 @@
 // 放置需要的打印工具方法
 import {appendFileSync,mkdirSync,readdirSync,readFileSync,unlinkSync,writeFileSync} from "node:fs";
 import {dirname,join} from "node:path";
+import {safeJsonStringify} from "axl-utils/js/json";
 import type {stat} from "./types.js";
 import {initStat,maxturn,PRUNE_REPORT_INTERVAL} from "./data.js";
 import {allMoveCache} from "./prune.js";
@@ -106,7 +107,7 @@ export function myWirteFile (fileName: string,stats: stat[],isNeedDelete?: boole
   }
   const filePath2 = join(__dirname,`${fileName}.json`);
   try {
-    writeFileSync(filePath2,JSON.stringify(stats),{encoding: "utf8"});
+    writeFileSync(filePath2,safeJsonStringify(stats),{encoding: "utf8"});
   } catch (error) {
     console.error(`写入 ${fileName}.log 失败:`,error);
   }
@@ -138,6 +139,10 @@ process.on("exit",flushallMove);
 /**
  * 记录操作前后的状态.缓冲到 ~1MB 再批量 appendFileSync,
  * 避免每次操作都打开/关闭文件(百万次 writeFileSync 是性能灾难).
+ * @param actionType 操作类型
+ * @param wujiangArr 执行武将数组
+ * @param beforeKey 操作前状态 key
+ * @param afterKey 操作后状态 key(为 null 表示被剪枝)
  */
 export function recordAction (actionType: string,wujiangArr: string[],beforeKey: string,afterKey: null | string): void {
   actionRecordCount++;
@@ -193,20 +198,24 @@ function clearDepthFiles (): void {
       continue;
     }
     for (const file of files) {
-      for (const targetName of fileNameArrToDelete) {
-        if (file.startsWith(targetName) && (file.endsWith(".log") || file.endsWith(".json"))) {
-          try {
-            unlinkSync(join(dir,file));
-            console.log(`已删除旧文件: ${file}`);
-          } catch {
-
-            // 忽略
-          }
-          break;
-        }
-      }
+      shouldDeleteIfMatch(dir,file);
     }
   }
+}
+function shouldDeleteIfMatch (dir: string,file: string): boolean {
+  for (const targetName of fileNameArrToDelete) {
+    if (file.startsWith(targetName) && (file.endsWith(".log") || file.endsWith(".json"))) {
+      try {
+        unlinkSync(join(dir,file));
+        console.log(`已删除旧文件: ${file}`);
+      } catch {
+
+        // 忽略
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 // #endregion

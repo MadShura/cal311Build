@@ -20,11 +20,11 @@ const fileNameArrToDelete = [
 // 添加剪枝计数器
 const pruneCount: Record<string,number> = {
   全做完剪枝:        0,
+  最终结果钱比你多剪枝:   0,
   啥都比不过最终结果剪枝:  0,
   回合超出剪枝:       0,
   当前状态武将不空闲剪枝:  0,
   当前状态行动力不符合剪枝: 0,
-  最终结果钱比你多剪枝:   0,
   治安金钱支配剪枝:     0
 };
 
@@ -138,6 +138,10 @@ process.on("exit",flushallMove);
 /**
  * 记录操作前后的状态.缓冲到 ~1MB 再批量 appendFileSync,
  * 避免每次操作都打开/关闭文件(百万次 writeFileSync 是性能灾难).
+ * @param actionType 操作类型
+ * @param wujiangArr 执行武将数组
+ * @param beforeKey 操作前状态 key
+ * @param afterKey 操作后状态 key(为 null 表示被剪枝)
  */
 export function recordAction (actionType: string,wujiangArr: string[],beforeKey: string,afterKey: null | string): void {
   if (!isLogEnabled) {
@@ -181,8 +185,6 @@ ${stat.行动.map((op,i) => `  ${(i + 1).toString()}. ${op}`).join("\n")}
     console.error(`写入深度 ${stat.turn.toString()} 文件失败:`,error);
   }
 }
-
-// 删除 文件(同时清理 src/ 与 src/output/)
 function clearDepthFiles (): void {
   const dirs = [__dirname,join(__dirname,"output")];
   for (const dir of dirs) {
@@ -193,20 +195,26 @@ function clearDepthFiles (): void {
       continue;
     }
     for (const file of files) {
-      for (const targetName of fileNameArrToDelete) {
-        if (file.startsWith(targetName) && (file.endsWith(".log") || file.endsWith(".json"))) {
-          try {
-            unlinkSync(join(dir,file));
-            console.log(`已删除旧文件: ${file}`);
-          } catch {
-
-            // 忽略
-          }
-          break;
-        }
-      }
+      shouldDeleteIfMatch(dir,file);
     }
   }
+}
+
+// 删除 文件(同时清理 src/ 与 src/output/)
+function shouldDeleteIfMatch (dir: string,file: string): boolean {
+  for (const targetName of fileNameArrToDelete) {
+    if (file.startsWith(targetName) && (file.endsWith(".log") || file.endsWith(".json"))) {
+      try {
+        unlinkSync(join(dir,file));
+        console.log(`已删除旧文件: ${file}`);
+      } catch {
+
+        // 忽略
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 // #endregion

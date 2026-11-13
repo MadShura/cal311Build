@@ -98,8 +98,7 @@ export function deepCloneStat (original: stat): stat {
 }
 
 /**
- * 生成全项目唯一的状态 key
- * 键 = 回合 + 建筑进度 + 武将空闲;不含治安 —— 治安是 Pareto 前沿里被比较的维度.
+ * 生成全项目唯一的状态 key 键 = 回合 + 建筑进度 + 武将空闲;不含治安 —— 治安是 Pareto 前沿里被比较的维度.
  * @param stat 当前状态
  * @returns 状态 key
  */

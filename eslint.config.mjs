@@ -15,7 +15,7 @@ export default createConfig({
       files: ["scripts/**/*.ts"],
       rules: {"unicorn/no-process-exit": "off","max-lines": "off"}
     },{
-      files: ["src/**/*.ts"],
+      files: ["src/**/*.ts","src1/**/*.ts","src2/**/*.ts","src3/**/*.ts","bench.mjs"],
       rules: {"custom-rules/no-native-api": "off"}
     }
   ]
