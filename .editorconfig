@@ -1,0 +1,23 @@
+# https://spec.editorconfig.org/
+[*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,css,scss,sass,less,styl}] # 要影响的文件
+charset = utf-8 
+
+# spelling_language # 设置用于拼写检查的自然语言。只能指定一种语言。 charset 用 UTF-8 基本无需设置此项
+# 缩进空格数   
+indent_size = 2 
+
+#  tab | space 表示空格样式 
+indent_style = space 
+
+# tab_width = 2 # tab 宽度 通常无需设置此项
+# 设为 true 可确保文件在保存时以换行结束，编辑器也不得在保存空文件时插入换行符。设为 false 则不以换行结束 因为我的 eslint 设置结束不允许空行 因此这里改为 false
+insert_final_newline = false 
+
+# true 可删除文件中换行符前的所有空白字符，设置为 “false ”则确保不删除
+trim_trailing_whitespace = true 
+
+# lf | crlf | cr 表示换行符 lf 是 linux 用的 crlf 是 window
+end_of_line = lf 
+max_line_length = 100 
+
+# root = true # 设置为 “true ”时，内核不会在当前文件名下检查更高目录中的 EditorConfig 设置。该值不区分大小写。

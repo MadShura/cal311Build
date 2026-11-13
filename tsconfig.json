@@ -29,10 +29,6 @@
     "**/dist-ssr/**",
     "**/coverage/**",
     "**/*.cache",
-        "src/tkf398/spt398server",// 别人的项目
-    "src/tkf398/反编译398", // 其他语言
-    "src/挂机手游模拟器/反编译",// 其他语言
-    "src/tkf398/自改配置&mod/user/mods/" // 别人写的 mod
 
   ], 
   "references": [] // 引用
