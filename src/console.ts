@@ -3,7 +3,7 @@ import {appendFileSync,mkdirSync,readdirSync,readFileSync,unlinkSync,writeFileSy
 import {dirname,join} from "node:path";
 import type {stat} from "./types.js";
 import {initStat,maxturn,PRUNE_REPORT_INTERVAL} from "./data.js";
-import {allMoveCache} from "./index.js";
+import {allMoveCache} from "./prune.js";
 import {isLogEnabled} from "./config.js";
 
 const __dirname = import.meta.dirname;
@@ -19,9 +19,13 @@ const fileNameArrToDelete = [
 
 // 添加剪枝计数器
 const pruneCount: Record<string,number> = {
-  全做完剪枝:      0,
-  支配剪枝:       0,
-  最终结果钱比你多剪枝: 0
+  全做完剪枝:        0,
+  啥都比不过最终结果剪枝:  0,
+  回合超出剪枝:       0,
+  当前状态武将不空闲剪枝:  0,
+  当前状态行动力不符合剪枝: 0,
+  最终结果钱比你多剪枝:   0,
+  治安金钱支配剪枝:     0
 };
 
 /**

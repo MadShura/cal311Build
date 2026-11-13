@@ -1,17 +1,13 @@
 import type {ActionChoice,Moving,stat} from "./types.js";
-import {baseStat0,initStat,maxLastTurnIncome,maxturn,能接受的最大治安} from "./data.js";
-import {calMonthIncome,deepCloneStat,generateXindongCacheKey,getfreeWuJiangBuild,getFreeWujiangNameIsArr,getfreeWuJiangXuncha,getSortedBuildCombinations,isCalBestBuildingEd,isCheckFlag,市场最小时间,最大巡查值,造币厂最小时间} from "./game-logic.js";
-import {initCacheArray} from "axl-utils/js/array";
+import {baseStat0,initStat,maxturn,能接受的最大治安} from "./data.js";
+import {calMonthIncome,deepCloneStat,generateXindongCacheKey,getfreeWuJiangBuild,getFreeWujiangNameIsArr,getfreeWuJiangXuncha,getSortedBuildCombinations,isCheckFlag,市场最小时间,最大巡查值,造币厂最小时间} from "./game-logic.js";
 import {getBestGold,init,myWirteFile,recordAction,recordPrune} from "./console.js";
-import {createWriteStream,readFileSync} from "node:fs";
+import {allMoveCache,pruneByActionPoint,pruneByFinalGold,pruneByTurnExceed,pruneByWujiangIdle,pruneZhianGold,streamCache,willPruneByBestResult} from "./prune.js";
+import {readFileSync} from "node:fs";
 
-export let allMoveCache: Map<string,number>[] = []; // 全行动缓存
 let bestResultArr: stat[] = [];
 let bestGold = 0; // 最大经济
 const resultFileName = "_gen-result";
-
-// 根据当前空闲的武将,得到最好的巡查组合
-allMoveCache = initCacheArray(maxturn + 1);
 
 // #region 执行操作
 // 返回新 stat
@@ -52,16 +48,7 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
       passTurnMustDo(newStat,true);
       return null;
     }
-
-    // 支配剪枝放下面 节省内存
-    const cache = allMoveCache[newStat.turn];
-    if (cache !== undefined) {
-      if (cache.has(currentXindongCacheKey) && (cache.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
-        recordPrune("支配剪枝");
-        return null;
-      }
-      cache.set(currentXindongCacheKey,newStat.实时金);
-    }
+    if (pruneZhianGold(newStat.turn,newStat)) {return null;}
     recordAction(actionType,wujiangArr,currentXindongCacheKey,currentXindongCacheKey);
     return newStat;
 
@@ -100,16 +87,7 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
     passTurnMustDo(newStat,true);
     return null;
   }
-
-  // 支配剪枝放下面 节省内存
-  const cache = allMoveCache[newStat.turn];
-  if (cache !== undefined) {
-    if (cache.has(currentXindongCacheKey) && (cache.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
-      recordPrune("支配剪枝");
-      return null;
-    }
-    cache.set(currentXindongCacheKey,newStat.实时金);
-  }
+  if (pruneZhianGold(newStat.turn,newStat)) {return null;}
   recordAction(actionType,wujiangArr,currentXindongCacheKey,currentXindongCacheKey);
   return newStat;
 }
@@ -124,10 +102,7 @@ function executeTurnAction (stat: stat): null | stat {
   newStat.isDoMustDo.push(turnIndex);
   const mustDoParts: string[] = [];
   if (action.行动力消耗) {
-    if (newStat.行动力 < action.行动力消耗) {
-      recordPrune("当前状态行动力不符合剪枝");
-      return null;
-    }
+    if (pruneByActionPoint(newStat,action)) {return null;}
     newStat.行动力 -= action.行动力消耗;
     mustDoParts.push(`消耗行动力${action.行动力消耗.toString()} `);
   }
@@ -143,8 +118,7 @@ function executeTurnAction (stat: stat): null | stat {
       if (wujiang.free === 0) {
         wujiang.free = freeValue;
         mustDoParts.push(`${wujiangName}设置为${freeValue.toString()} `);
-      } else {
-        recordPrune("当前状态武将不空闲剪枝");
+      } else if (pruneByWujiangIdle(wujiang,freeValue)) {
         return null;
       }
     }
@@ -233,10 +207,10 @@ async function main (): Promise<void> {
   for (let i = 0,len = maxturn; i < len; i++) {
     const cache = allMoveCache[i];
     if (cache === undefined) {continue;}
-    console.log(`写出 ${String(i)} 回合缓存, 共 ${cache.size.toString()} 条`);
     await streamCache(cache,`src/output/${i.toString()}回合结束缓存.log`);
     cache.clear();
   }
+  console.log("写出回合缓存完成");
 }
 
 // #region 过回合逻辑
@@ -257,59 +231,8 @@ function passTurnMustDo (stat: stat,isDone?: boolean): null | stat {
   // If (generateXindongCacheKey(newStat) === "9 回合,治安99,行动力156 市场[3,3,0,0,0,0]造币厂[0]巡查[0]伦直3贾范3公孙恭3公孙康92公孙度92徐荣3公孙渊3杨祚0卑衍0") {
   // Console.log(newStat,"passTurnMustDo3",isDone);
   // }
-  // Region 最终结果钱多剪枝
-  if (bestGold && newStat.turn === maxturn - 市场最小时间 - 3) {
-    const need巡查次数 = Math.ceil((能接受的最大治安 - newStat.治安) / 最大巡查值); // 有可能负数
-    let needGold = Math.max(0,need巡查次数 * 100);
-
-    // 加上需要做多少个市场造币厂的花费
-    needGold += (newStat.moving["市场"].mustBuildIn - newStat.moving["市场"].isBuilding.length) * newStat.moving["市场"].cost;
-    needGold += (newStat.moving["造币厂"].mustBuildIn - newStat.moving["造币厂"].isBuilding.length) * newStat.moving["造币厂"].cost;
-    const needTrun = maxturn - newStat.turn;
-
-    // 剩余回合是否需要金币消耗 thisTurnMustDo 是从0开始 stat.turn 是从1开始 这里刚好符合逻辑 9 回合确实要吃10回合的必做
-    const remainingMustDo = baseStat0.thisTurnMustDo.slice(-needTrun);
-    for (const el of remainingMustDo) {
-      if (el?.金币消耗) {
-        needGold += el.金币消耗;
-      }
-    }
-    let month9Income = 0;
-    const _zhian = Math.min(newStat.治安 + need巡查次数 * 最大巡查值,100);
-    if (newStat.turn < 9) { // 小于9 才计算,如果为9 上面已经发过钱
-      month9Income = calMonthIncome(newStat,9,_zhian); // 估算所以使用100的治安
-    }
-
-    // If (generateXindongCacheKey(newStat) === "6 回合,治安99,行动力64 市场[3,3,3,0]造币厂[3]巡查[0]伦直3贾范3公孙恭3公孙康95公孙度95徐荣3公孙渊3杨祚3卑衍3") {
-    // Console.log("passTurnMustDo3",newStat.turn,newStat.实时金,newStat.治安,_zhian,needGold,month9Income,newStat.moving["市场"].isBuilding,newStat.moving["造币厂"].isBuilding,newStat.实时金 - needGold + month9Income + Math.floor(maxLastTurnIncome * _zhian / 100),bestGold);
-    // }
-    if (newStat.实时金 - needGold + month9Income + Math.floor(maxLastTurnIncome * _zhian / 100) < bestGold) {
-      recordPrune("最终结果钱比你多剪枝");
-
-      // Console.log(newStat.实时金,newStat.turn,newStat.moving["市场"].isBuilding,newStat.moving["造币厂"].isBuilding,newStat.治安,bestGold);
-      return null;
-    }
-
-    // Region 最终结果逐回合剪枝
-    // 根据最终的结果,依次判断 治安 市场完成时间数 造币厂完成时间数.只要发现任意一个值能比最好结果好,即可通过 否则剪枝
-  } else if (bestGold && newStat.turn < maxturn - 市场最小时间 - 3) {
-    const bestStat = bestResultArr[0];
-    const bestDay = bestStat?.eachTrunStatWithMoney[newStat.turn];
-    if (bestDay !== undefined) {
-      let nowB = newStat.moving.市场.isBuilding;
-      let bestB = bestDay.市场;
-
-      // Console.log(nowB,bestB);
-      const isComP市场 = isCalBestBuildingEd(bestB,nowB,newStat.turn);
-      nowB = newStat.moving.造币厂.isBuilding;
-      bestB = bestDay.造币厂;
-      const isComP造币厂 = isCalBestBuildingEd(bestB,nowB,newStat.turn);
-      if (!(isComP市场 || isComP造币厂 || newStat.治安 >= bestDay.治安)) {
-        recordPrune("啥都比不过最终结果剪枝");
-        return null;
-      }
-    }
-  }
+  if (pruneByFinalGold(newStat,bestGold)) {return null;}
+  if (willPruneByBestResult(newStat,bestResultArr)) {return null;}
   newStat.turn++; // 加回合数
   const {moving,wujiangData} = newStat;
 
@@ -335,26 +258,14 @@ function passTurnMustDo (stat: stat,isDone?: boolean): null | stat {
   };
   newStat.行动力 = Math.min(newStat.行动力 + baseStat0.每回合回复行动力,255);
   const currentXindongCacheKey = generateXindongCacheKey(newStat);
-
-  // 如果这个状态上面没跳出,那么这里能拦截 超过 maxturn 的状态直接丢弃
-  if (newStat.turn > maxturn) {
-    recordPrune("回合超出剪枝");
-    return null;
-  }
+  if (pruneByTurnExceed(newStat)) {return null;}
 
   // If (generateXindongCacheKey(newStat) === "9 回合,治安99,行动力196 市场[0,0,0,0]造币厂[0]巡查[0]伦直0贾范0公孙恭0公孙康92公孙度92徐荣0公孙渊0杨祚0卑衍0") {
   // Console.log(newStat,"passTurnMustDo2",allMoveCache.has(currentXindongCacheKey),allMoveCache.get(currentXindongCacheKey));
   // }
   // 故意设置的是 stat.turn 因为 如果是 newStat.turn 那么这里的记录就是7回合,原意是记录所有6回合结束的状态
   // 记录的操作时 '回合结束 x 回合' 这时候的状态 所以实际上是上一个回合的状态
-  const cache = allMoveCache[stat.turn];
-  if (cache !== undefined) {
-    if (cache.has(currentXindongCacheKey) && (cache.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
-      recordPrune("支配剪枝");
-      return null;
-    }
-    cache.set(currentXindongCacheKey,newStat.实时金);
-  }
+  if (pruneZhianGold(stat.turn,newStat)) {return null;}
   newStat.xunchaEd = false;
   newStat.行动.push(`回合结束 ${currentXindongCacheKey} 实时金:${newStat.实时金.toString()}`); // 过回合
   if (isDone) {
@@ -490,28 +401,6 @@ async function runApp (): Promise<void> {
 }
 
 // #endregion
-// 流式写出单回合缓存:逐条写,尊重背压,避免把整本缓存拼成几百 MB 字符串.
- async function streamCache (cache: Map<string,number>,filePath: string): Promise<void> {
-  return new Promise((resolve,reject) => {
-    const ws = createWriteStream(filePath,"utf8");
-    ws.on("error",reject);
-    ws.on("finish",resolve);
-    const it = cache.entries();
-    let isOk = true;
-    function pump (): void {
-      let count = 0;
-      while (isOk && count < 20000) {
-        const n = it.next();
-        if (n.done) {ws.end(); return;}
-        const [key,value] = n.value;
-        isOk = ws.write(`${key}: ${value.toString()}\n`);
-        count++;
-      }
-      if (!isOk) {ws.once("drain",() => {isOk = true; pump();});}
-    }
-    pump();
-  });
-}
 function updateBestResultMap (stat: stat): void {
   if (stat.实时金 > bestGold) {
     bestResultArr = [stat];
