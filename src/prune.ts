@@ -5,7 +5,7 @@
 // 缓存命中优化:建造 isBuilding 已在 game-logic 中排序,键天然规整,命中率更高.
 import type {Moving,stat,TurnAction} from "./types.js";
 import {baseStat0,maxLastTurnIncome,maxturn,能接受的最大治安} from "./data.js";
-import {calMonthIncome,isCalBestBuildingEd,市场最小时间,最大巡查值} from "./game-logic.js";
+import {calMonthIncome,isCalBestBuildingEd,最大巡查值,市场最小时间} from "./game-logic.js";
 import {recordPrune} from "./console.js";
 import {createWriteStream} from "node:fs";
 
@@ -70,11 +70,10 @@ export function pruneByFinalGold (newStat: stat,bestGold: number): boolean {
   if (newStat.turn < 9) { // 小于9 才计算,如果为9 上面已经发过钱
     month9Income = calMonthIncome(newStat,9,_zhian); // 估算所以使用100的治安
   }
-
-  // if (newStat.实时金 - needGold + month9Income + Math.floor(maxLastTurnIncome * _zhian / 100) < bestGold) {
-  // recordPrune("最终结果钱比你多剪枝");
-  // return true;
-  // }
+  if (newStat.实时金 - needGold + month9Income + Math.floor(maxLastTurnIncome * _zhian / 100) < bestGold) {
+    recordPrune("最终结果钱比你多剪枝");
+    return true;
+  }
   return false;
 }
 

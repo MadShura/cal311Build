@@ -1,6 +1,6 @@
 import type {ActionChoice,Moving,stat} from "./types.js";
 import {baseStat0,initStat,maxturn,能接受的最大治安} from "./data.js";
-import {calMonthIncome,deepCloneStat,generateXindongCacheKey,getfreeWuJiangBuild,getFreeWujiangNameIsArr,getfreeWuJiangXuncha,getSortedBuildCombinations,isCheckFlag,市场最小时间,最大巡查值,造币厂最小时间} from "./game-logic.js";
+import {calMonthIncome,deepCloneStat,generateXindongCacheKey,getfreeWuJiangBuild,getFreeWujiangNameIsArr,getfreeWuJiangXuncha,getSortedBuildCombinations,isCheckFlag,最大巡查值,市场最小时间,造币厂最小时间} from "./game-logic.js";
 import {getBestGold,init,myWirteFile,recordAction,recordPrune} from "./console.js";
 import {allMoveCache,pruneByActionPoint,pruneByFinalGold,pruneByTurnExceed,pruneByWujiangIdle,pruneZhianGold,streamCache,willPruneByBestResult} from "./prune.js";
 import {readFileSync} from "node:fs";
