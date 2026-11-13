@@ -1,0 +1,102 @@
+{
+  "src-cold": {
+    "id": "src-cold",
+    "label": "src 第1次(无结果)",
+    "entry": "src/index.ts",
+    "startedAt": "2026-11-13T16:38:25.198Z",
+    "elapsedMs": 55518,
+    "elapsedSec": 55.52,
+    "maxProcessRssMB": 2037.9,
+    "sumPeaksRssMB": 2150,
+    "rssSamplesKB": [
+      2086852,
+      56796,
+      57936
+    ],
+    "exitCode": 0,
+    "timedOut": false,
+    "resultFileBefore": false,
+    "hadOriginalResult": true,
+    "initialBestGold": 0,
+    "finalGold": 3610,
+    "coldResultBackedUp": true
+  },
+  "src-warm": {
+    "id": "src-warm",
+    "label": "src 第2次(读结果)",
+    "entry": "src/index.ts",
+    "startedAt": "2026-11-13T16:39:27.703Z",
+    "elapsedMs": 67148,
+    "elapsedSec": 67.15,
+    "maxProcessRssMB": 1948.4,
+    "sumPeaksRssMB": 2061,
+    "rssSamplesKB": [
+      1995124,
+      57056,
+      58244
+    ],
+    "exitCode": 0,
+    "timedOut": false,
+    "resultFileBefore": true,
+    "restoreSource": "D:\\code\\axl-studio\\packages\\projects\\cal311Build\\.bench-backup\\cold",
+    "initialBestGold": 3610,
+    "finalGold": 3610
+  },
+  "src1": {
+    "id": "src1",
+    "label": "src1",
+    "entry": "src1/index.ts",
+    "startedAt": "2026-11-13T16:40:48.514Z",
+    "elapsedMs": 60672,
+    "elapsedSec": 60.67,
+    "maxProcessRssMB": 2132.5,
+    "sumPeaksRssMB": 2245.1,
+    "rssSamplesKB": [
+      2183716,
+      57100,
+      58144
+    ],
+    "exitCode": 0,
+    "timedOut": false,
+    "initialBestGold": 0,
+    "finalGold": 3610
+  },
+  "src2": {
+    "id": "src2",
+    "label": "src2",
+    "entry": "src2/index.ts",
+    "startedAt": "2026-11-13T16:41:55.919Z",
+    "elapsedMs": 50705,
+    "elapsedSec": 50.7,
+    "maxProcessRssMB": 2074.1,
+    "sumPeaksRssMB": 2186.4,
+    "rssSamplesKB": [
+      2123924,
+      56664,
+      58304
+    ],
+    "exitCode": 0,
+    "timedOut": false,
+    "initialBestGold": 0,
+    "finalGold": 3610
+  },
+  "src3": {
+    "id": "src3",
+    "label": "src3",
+    "entry": "src3/index.ts",
+    "startedAt": "2026-11-13T16:42:52.416Z",
+    "elapsedMs": 54168,
+    "elapsedSec": 54.17,
+    "maxProcessRssMB": 3729.7,
+    "sumPeaksRssMB": 3841.9,
+    "rssSamplesKB": [
+      3819204,
+      57092,
+      57780
+    ],
+    "exitCode": 0,
+    "timedOut": false,
+    "initialBestGold": null,
+    "finalGold": 3610
+  }
+}

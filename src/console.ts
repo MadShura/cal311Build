@@ -20,11 +20,11 @@ const fileNameArrToDelete = [
 // 添加剪枝计数器
 const pruneCount: Record<string,number> = {
   全做完剪枝:        0,
-  最终结果钱比你多剪枝:   0,
   啥都比不过最终结果剪枝:  0,
   回合超出剪枝:       0,
   当前状态武将不空闲剪枝:  0,
   当前状态行动力不符合剪枝: 0,
+  最终结果钱比你多剪枝:   0,
   治安金钱支配剪枝:     0
 };
 
@@ -140,6 +140,9 @@ process.on("exit",flushallMove);
  * 避免每次操作都打开/关闭文件(百万次 writeFileSync 是性能灾难).
  */
 export function recordAction (actionType: string,wujiangArr: string[],beforeKey: string,afterKey: null | string): void {
+  if (!isLogEnabled) {
+    return;
+  }
   actionRecordCount++;
   let content = `========== 第 ${actionRecordCount.toString()} 次操作 ==========\n`;
   content += `操作类型: ${actionType}\n`;
@@ -153,9 +156,6 @@ export function recordAction (actionType: string,wujiangArr: string[],beforeKey:
     content += `\n操作后状态:\n${afterKey}\n`;
   }
   content += "========================================\n\n";
-  if (!isLogEnabled) {
-    return;
-  }
   allMoveBuffer += content;
   if (allMoveBuffer.length > 100_0000) {flushallMove();}
 }
