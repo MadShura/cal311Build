@@ -3,34 +3,15 @@
 // · 回合收入剪枝(最终结果剪枝) :基于 bestGold / bestResultArr 估算最终经济提前剪枝
 // · 其它纯判定剪枝 :行动力不符合 / 武将不空闲 / 回合超出
 // 缓存命中优化:建造 isBuilding 已在 game-logic 中排序,键天然规整,命中率更高.
-import type {Moving,stat,TurnAction} from "./types.js";
+import type {stat,TurnAction} from "./types.js";
 import {baseStat0,maxLastTurnIncome,maxturn,能接受的最大治安} from "./data.js";
-import {calMonthIncome,isCalBestBuildingEd,最大巡查值,市场最小时间} from "./game-logic.js";
+import {calMonthIncome,generateXindongCacheKey,isCalBestBuildingEd,市场最小时间,最大巡查值} from "./game-logic.js";
 import {recordPrune} from "./console.js";
 import {createWriteStream} from "node:fs";
 
 // 全行动缓存:键 = 回合+建造+人物(不含治安),值 = (治安,金钱) 的 Pareto 前沿
 interface ZhianGold {gold: number; zhian: number}
 export const allMoveCache: Map<string,ZhianGold[]>[] = Array.from({length: maxturn + 1},() => new Map<string,ZhianGold[]>());
-
-// 生成剪枝用的 key:与 generateXindongCacheKey 相同,但去掉 治安. 用于比较「同回合 + 同建造 + 同人物」下,金钱与治安两维的支配关系.
-export function generateXindongCacheKeyNoZhian (stat: stat): string {
-  const {moving,wujiangData} = stat;
-  const parts: string[] = [`${stat.turn.toString()} 回合 `];
-  for (const mov in moving) {
-    if (mov === "啥都不做") {continue;}
-    const eachIsBuilding = moving[mov as keyof Moving].isBuilding;
-    parts.push(`${mov}[${eachIsBuilding.join(",")}]`);
-  }
-  for (const wujiangName in wujiangData) {
-    const info = wujiangData[wujiangName];
-    if (info === undefined) {continue;}
-    parts.push(`${wujiangName}${info.free.toString()}`);
-  }
-
-  // console.log(parts.join(""));
-  return parts.join("");
-}
 
 // #region 4. 其它纯判定剪枝
 // 当前状态必做操作的行动力不足 → 剪枝
@@ -103,22 +84,22 @@ export function pruneByWujiangIdle (wujiang: {free: number},freeValue: number): 
  * 用例 3/5/9:当前更优 → 删掉被它支配的旧点(垃圾),存入当前
  * 用例 6/7:两维一高一低(不可比较)→ 保留
  * @param turn 缓存层(executeAction 用 newStat.turn,passTurnMustDo 用 stat.turn)
- * @param newStat 待判定状态
+ * @param stat 待判定状态
  * @returns 是否被剪枝
  */
-export function pruneZhianGold (turn: number,newStat: stat): boolean {
+export function pruneZhianGold (turn: number,stat: stat): boolean {
   const cache = allMoveCache[turn];
   if (cache === undefined) {return false;}
-  const key = generateXindongCacheKeyNoZhian(newStat);
+  const key =  generateXindongCacheKey(stat);
   const frontier = cache.get(key) ?? [];
   for (const p of frontier) {
-    if (p.zhian >= newStat.治安 && p.gold >= newStat.实时金) {
+    if (p.zhian >= stat.治安 && p.gold >= stat.实时金) {
       recordPrune("治安金钱支配剪枝");
       return true;
     }
   }
-  const next = frontier.filter(p => !(newStat.治安 >= p.zhian && newStat.实时金 >= p.gold));
-  next.push({gold: newStat.实时金,zhian: newStat.治安});
+  const next = frontier.filter(p => !(stat.治安 >= p.zhian && stat.实时金 >= p.gold));
+  next.push({gold: stat.实时金,zhian: stat.治安});
   cache.set(key,next);
   return false;
 }

@@ -98,13 +98,14 @@ export function deepCloneStat (original: stat): stat {
 }
 
 /**
- * 生成 allMoveCache 的 key
+ * 生成全项目唯一的状态 key
+ * 键 = 回合 + 建筑进度 + 武将空闲;不含治安 —— 治安是 Pareto 前沿里被比较的维度.
  * @param stat 当前状态
- * @returns xindongCacheKey 字符串
+ * @returns 状态 key
  */
 export function generateXindongCacheKey (stat: stat): string {
   const {moving,wujiangData} = stat;
-  const parts: string[] = [`${stat.turn.toString()} 回合,治安${stat.治安.toString()} `];
+  const parts: string[] = [`${stat.turn.toString()} 回合 `];
 
   // 建筑部分
   for (const mov in moving) {
