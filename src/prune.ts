@@ -70,10 +70,11 @@ export function pruneByFinalGold (newStat: stat,bestGold: number): boolean {
   if (newStat.turn < 9) { // 小于9 才计算,如果为9 上面已经发过钱
     month9Income = calMonthIncome(newStat,9,_zhian); // 估算所以使用100的治安
   }
-  if (newStat.实时金 - needGold + month9Income + Math.floor(maxLastTurnIncome * _zhian / 100) < bestGold) {
-    recordPrune("最终结果钱比你多剪枝");
-    return true;
-  }
+
+  // if (newStat.实时金 - needGold + month9Income + Math.floor(maxLastTurnIncome * _zhian / 100) < bestGold) {
+  // recordPrune("最终结果钱比你多剪枝");
+  // return true;
+  // }
   return false;
 }
 
