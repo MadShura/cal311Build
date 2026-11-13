@@ -98,7 +98,7 @@ export function deepCloneStat (original: stat): stat {
 }
 
 /**
- * 生成 全行动缓存的 key
+ * 生成 allMoveCache 的 key
  * @param stat 当前状态
  * @returns xindongCacheKey 字符串
  */

@@ -67,14 +67,6 @@ export const baseStat0: BaseStat0 = {
       每月收入:        225,
       耐久:          567
     },
-    巡查: {
-      cost:        100,
-      isBuilding:  [0], // 默认必须0
-      mustBuildIn: 100,
-      pointCost:   20,
-      每月收入:        0,
-      耐久:          0
-    },
     市场: {
       cost:        200,
       isBuilding:  [],
@@ -82,6 +74,14 @@ export const baseStat0: BaseStat0 = {
       pointCost:   20,
       每月收入:        75,
       耐久:          375
+    },
+    巡查: {
+      cost:        100,
+      isBuilding:  [0], // 默认必须0
+      mustBuildIn: 100,
+      pointCost:   20,
+      每月收入:        0,
+      耐久:          0
     },
     造币厂: {
       cost:        400,

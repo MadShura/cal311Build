@@ -2,15 +2,16 @@ import type {ActionChoice,Moving,stat} from "./types.js";
 import {baseStat0,initStat,maxLastTurnIncome,maxturn,能接受的最大治安} from "./data.js";
 import {calMonthIncome,deepCloneStat,generateXindongCacheKey,getfreeWuJiangBuild,getFreeWujiangNameIsArr,getfreeWuJiangXuncha,getSortedBuildCombinations,isCalBestBuildingEd,isCheckFlag,市场最小时间,最大巡查值,造币厂最小时间} from "./game-logic.js";
 import {initCacheArray} from "axl-utils/js/array";
-import {getBestGold,init,myWirteFile,recordPrune} from "./console.js";
-import {readFileSync,writeFileSync} from "node:fs";
+import {getBestGold,init,myWirteFile,recordAction,recordPrune} from "./console.js";
+import {createWriteStream,readFileSync} from "node:fs";
 
-export let 全行动缓存: Map<string,number>[] = [];
+export let allMoveCache: Map<string,number>[] = []; // 全行动缓存
 let bestResultArr: stat[] = [];
 let bestGold = 0; // 最大经济
+const resultFileName = "_gen-result";
 
 // 根据当前空闲的武将,得到最好的巡查组合
-全行动缓存 = initCacheArray(maxturn + 1);
+allMoveCache = initCacheArray(maxturn + 1);
 
 // #region 执行操作
 // 返回新 stat
@@ -41,7 +42,7 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
     newStat.行动.push(`回合操作 巡查 ${wujiangArrStr} ${currentXindongCacheKey} 实时金:${newStat.实时金.toString()}`); // 每个操作后都 push
     let isAllDone = true;
     for (const movingName in newStat.moving) {
-      if (movingName !== "啥都不做" && !newStat.flag[movingName]) {
+      if (movingName !== "啥都不做" && newStat.flag[movingName] !== true) {
         isAllDone = false;
       }
     }
@@ -53,12 +54,15 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
     }
 
     // 支配剪枝放下面 节省内存
-    // If (全行动缓存.has(currentXindongCacheKey) && (全行动缓存.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
-    // RecordPrune("支配剪枝");
-    // Return null;
-    // }
-    // 全行动缓存.set(currentXindongCacheKey,newStat.实时金);
-    // RecordAction(actionType,wujiangArr,currentXindongCacheKey,newXindongCacheKey);
+    const cache = allMoveCache[newStat.turn];
+    if (cache !== undefined) {
+      if (cache.has(currentXindongCacheKey) && (cache.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
+        recordPrune("支配剪枝");
+        return null;
+      }
+      cache.set(currentXindongCacheKey,newStat.实时金);
+    }
+    recordAction(actionType,wujiangArr,currentXindongCacheKey,currentXindongCacheKey);
     return newStat;
 
     // 特殊行动
@@ -88,7 +92,7 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
   newStat.行动.push(`回合操作 建造 ${actionType} ${wujiangArrStr} 花费${needtime.toString()}回合 ${currentXindongCacheKey} 实时金:${newStat.实时金.toString()}`);
   let isAllDone = true;
   for (const movingName in newStat.moving) {
-    if (movingName !== "啥都不做" && !newStat.flag[movingName]) {
+    if (movingName !== "啥都不做" && newStat.flag[movingName] !== true) {
       isAllDone = false;
     }
   }
@@ -98,12 +102,15 @@ function executeAction (stat: stat,action: ActionChoice): null | stat {
   }
 
   // 支配剪枝放下面 节省内存
-  // If (全行动缓存.has(currentXindongCacheKey) && (全行动缓存.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
-  // RecordPrune("支配剪枝");
-  // Return null;
-  // }
-  // 全行动缓存.set(currentXindongCacheKey,newStat.实时金);
-  // RecordAction(actionType,wujiangArr,currentXindongCacheKey,newXindongCacheKey);
+  const cache = allMoveCache[newStat.turn];
+  if (cache !== undefined) {
+    if (cache.has(currentXindongCacheKey) && (cache.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
+      recordPrune("支配剪枝");
+      return null;
+    }
+    cache.set(currentXindongCacheKey,newStat.实时金);
+  }
+  recordAction(actionType,wujiangArr,currentXindongCacheKey,currentXindongCacheKey);
   return newStat;
 }
 
@@ -208,9 +215,8 @@ function getAllPossibleActions (stat: stat,movingNameArr: (keyof Moving)[]): Act
   return actions;
 }
 
-// #endregion
 // #region 主函数
-function main (): void {
+async function main (): Promise<void> {
   const stack: stat[] = [initStat];
   while (stack.length > 0) {
     const currentStat = stack.pop(); // 弹出当前状态,回到上一层
@@ -223,15 +229,13 @@ function main (): void {
   }
   console.log("查找完成,开始生成缓存文件");
 
-  // 打印所有全行动缓存
+  // 逐回合流式写出,写完后清空该缓存以释放内存
   for (let i = 0,len = maxturn; i < len; i++) {
-    const cache = 全行动缓存[i];
+    const cache = allMoveCache[i];
     if (cache === undefined) {continue;}
-    const cacheObj = Object.fromEntries(cache);
-    const output = Object.entries(cacheObj)
-      .map(([key,value]) => `${key}: ${value.toString()}`)
-      .join("\n");
-    writeFileSync(`src/output/${i.toString()}回合结束缓存.log`,output);
+    console.log(`写出 ${String(i)} 回合缓存, 共 ${cache.size.toString()} 条`);
+    await streamCache(cache,`src/output/${i.toString()}回合结束缓存.log`);
+    cache.clear();
   }
 }
 
@@ -339,11 +343,11 @@ function passTurnMustDo (stat: stat,isDone?: boolean): null | stat {
   }
 
   // If (generateXindongCacheKey(newStat) === "9 回合,治安99,行动力196 市场[0,0,0,0]造币厂[0]巡查[0]伦直0贾范0公孙恭0公孙康92公孙度92徐荣0公孙渊0杨祚0卑衍0") {
-  // Console.log(newStat,"passTurnMustDo2",全行动缓存.has(currentXindongCacheKey),全行动缓存.get(currentXindongCacheKey));
+  // Console.log(newStat,"passTurnMustDo2",allMoveCache.has(currentXindongCacheKey),allMoveCache.get(currentXindongCacheKey));
   // }
   // 故意设置的是 stat.turn 因为 如果是 newStat.turn 那么这里的记录就是7回合,原意是记录所有6回合结束的状态
   // 记录的操作时 '回合结束 x 回合' 这时候的状态 所以实际上是上一个回合的状态
-  const cache = 全行动缓存[stat.turn];
+  const cache = allMoveCache[stat.turn];
   if (cache !== undefined) {
     if (cache.has(currentXindongCacheKey) && (cache.get(currentXindongCacheKey) ?? 0) >= newStat.实时金) {
       recordPrune("支配剪枝");
@@ -472,29 +476,53 @@ function recordFinalResult (stat: stat): undefined {
   stat.行动.push(`最终结果 ${generateXindongCacheKey(stat)} 实时金:${stat.实时金.toString()}`);
   updateBestResultMap(stat);
 }
-function runApp (): void {
+async function runApp (): Promise<void> {
   bestGold = getBestGold();
   try {
-    bestResultArr = JSON.parse(readFileSync("src/result.json","utf8")) as stat[];
+    bestResultArr = JSON.parse(readFileSync(`src/${resultFileName}.json`,"utf8")) as stat[];
   } catch (error) {
     console.log("无最大值",error);
   }
   console.log(getBestGold());
   console.log("最大经济:",bestGold);
   init();
-  main();
+  await main();
+}
+
+// #endregion
+// 流式写出单回合缓存:逐条写,尊重背压,避免把整本缓存拼成几百 MB 字符串.
+ async function streamCache (cache: Map<string,number>,filePath: string): Promise<void> {
+  return new Promise((resolve,reject) => {
+    const ws = createWriteStream(filePath,"utf8");
+    ws.on("error",reject);
+    ws.on("finish",resolve);
+    const it = cache.entries();
+    let isOk = true;
+    function pump (): void {
+      let count = 0;
+      while (isOk && count < 20000) {
+        const n = it.next();
+        if (n.done) {ws.end(); return;}
+        const [key,value] = n.value;
+        isOk = ws.write(`${key}: ${value.toString()}\n`);
+        count++;
+      }
+      if (!isOk) {ws.once("drain",() => {isOk = true; pump();});}
+    }
+    pump();
+  });
 }
 function updateBestResultMap (stat: stat): void {
   if (stat.实时金 > bestGold) {
     bestResultArr = [stat];
     bestGold = stat.实时金;
     console.log("更好结果",`最终金额 ${stat.实时金.toString()}`,stat.行动.at(-1));
-    myWirteFile("result",bestResultArr,true);
+    myWirteFile(resultFileName,bestResultArr,true);
   } else if (stat.实时金 === bestGold) {
     bestResultArr.push(stat);
 
     // Console.log("相同结果",`最终金额 ${stat.实时金.toString()} `,stat.行动.at(-1));
-    myWirteFile("result",bestResultArr);
+    myWirteFile(resultFileName,bestResultArr);
   }
 }
 runApp();

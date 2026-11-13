@@ -18,7 +18,7 @@
 
 ## 一、本项目脚本生成文件
 
-- `src/result.json`（`pnpm 311b`）
+- `src/_gen-result.json`（`pnpm 311b`）
 - `src/tkf398/lab.json`、`bosstemplate.json` 等（`tkf398:gen:*`、`tkf398:translate`）
 - `src/tkf398/tkfCheck/output/*.txt`（`tkfcheck`）
 
